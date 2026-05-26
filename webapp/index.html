@@ -25,12 +25,26 @@
           <select id="modelSelect" name="model_path" required></select>
         </label>
 
-        <label class="dropzone" id="dropzone">
-          <input id="imageInput" name="image" type="file" accept="image/png,image/jpeg,image/webp,image/bmp" required>
-          <span>選擇圖片</span>
-        </label>
+        <div class="inputGroup">
+          <label class="dropzone" id="dropzone">
+            <input id="imageInput" name="image" type="file" accept="image/png,image/jpeg,image/webp,image/bmp">
+            <span>選擇圖片</span>
+          </label>
+          <div class="buttonGrid">
+            <button id="cameraButton" type="button" class="secondary">開啟相機</button>
+            <button id="captureButton" type="button" class="secondary" disabled>拍照</button>
+          </div>
+        </div>
 
-        <button id="submitButton" type="submit">測試分數</button>
+        <div class="cameraBox">
+          <video id="cameraVideo" autoplay playsinline></video>
+          <canvas id="cameraCanvas"></canvas>
+        </div>
+
+        <div class="actionBar">
+          <button id="clearButton" type="button" class="secondary">清除</button>
+          <button id="submitButton" type="submit">測試分數</button>
+        </div>
       </form>
 
       <p class="message" id="message"></p>
@@ -42,8 +56,15 @@
         <div id="emptyState">尚未選擇圖片</div>
       </div>
       <div class="scorePanel">
-        <span>Beauty score</span>
+        <div>
+          <span>Beauty score</span>
+          <p class="relative" id="relativeRank">相對等級 --</p>
+        </div>
         <strong id="score">--</strong>
+      </div>
+      <div class="detailsPanel" id="cropDetails" aria-live="polite">
+        <div class="detailsTitle">Crop details</div>
+        <div class="detailsEmpty">尚未產生詳細分數</div>
       </div>
     </section>
   </main>

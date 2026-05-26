@@ -70,7 +70,7 @@ p {
 
 form {
   display: grid;
-  gap: 18px;
+  gap: 22px;
 }
 
 .field {
@@ -94,6 +94,33 @@ select {
   background: #ffffff;
   color: #17202e;
   padding: 0 12px;
+}
+
+.inputGroup {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #d9e0e8;
+  border-radius: 8px;
+  background: #f9fbfd;
+}
+
+.buttonGrid,
+.actionBar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.actionBar {
+  align-items: stretch;
+  margin-top: 2px;
+}
+
+button.secondary {
+  border: 1px solid #c8d1dd;
+  background: #ffffff;
+  color: #31445c;
 }
 
 .dropzone input {
@@ -126,6 +153,25 @@ select:disabled {
   cursor: not-allowed;
 }
 
+.cameraBox {
+  display: grid;
+  gap: 12px;
+  margin-top: -6px;
+}
+
+#cameraVideo {
+  display: none;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 6px;
+  background: #101721;
+  object-fit: cover;
+}
+
+#cameraCanvas {
+  display: none;
+}
+
 .message {
   min-height: 22px;
   margin-top: 16px;
@@ -137,7 +183,7 @@ select:disabled {
   min-height: 600px;
   overflow: hidden;
   display: grid;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: 1fr auto auto;
 }
 
 .imageStage {
@@ -177,9 +223,68 @@ select:disabled {
   color: #617083;
 }
 
+.relative {
+  margin-top: 6px;
+  color: #31445c;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
 .scorePanel strong {
   font-size: 46px;
   line-height: 1;
+}
+
+.detailsPanel {
+  padding: 18px 24px 22px;
+  border-top: 1px solid #d9e0e8;
+  background: #fbfcfe;
+}
+
+.detailsTitle {
+  margin-bottom: 10px;
+  color: #617083;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.detailsEmpty {
+  color: #8b99aa;
+  font-size: 14px;
+}
+
+.detailRow {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr 0.7fr 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 1px solid #edf1f5;
+  color: #31445c;
+  font-size: 14px;
+}
+
+.detailRow:first-of-type {
+  border-top: 0;
+}
+
+.detailRow strong {
+  color: #17202e;
+  font-size: 17px;
+  text-align: right;
+}
+
+.detailRow em {
+  color: #728195;
+  font-style: normal;
+  text-align: right;
+}
+
+.detailRow.summary {
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid #cfd8e3;
+  font-weight: 700;
 }
 
 @media (max-width: 880px) {
@@ -188,9 +293,24 @@ select:disabled {
     align-items: start;
   }
 
+  .buttonGrid,
+  .actionBar {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
   .preview,
   .imageStage,
   .imageStage img {
     min-height: 420px;
+  }
+
+  .detailRow {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .detailRow strong,
+  .detailRow em {
+    text-align: left;
   }
 }
