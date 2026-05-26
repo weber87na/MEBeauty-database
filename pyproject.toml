@@ -1,0 +1,42 @@
+[project]
+name = "mebeauty-database"
+version = "0.1.0"
+description = "Python environment for MEBeauty dataset utilities and PyTorch models."
+readme = "README.md"
+requires-python = ">=3.10,<3.11"
+dependencies = [
+    "deepface==0.0.79",
+    "fastapi",
+    "uvicorn[standard]",
+    "python-multipart",
+    "tensorflow==2.10.1",
+    "tensorflow-io-gcs-filesystem==0.31.0",
+    "keras==2.10.0",
+    "numpy<2",
+    "opencv-python",
+    "pandas",
+    "pillow",
+    "progiter",
+    "matplotlib",
+    "torch==2.7.0",
+    "torchvision==0.22.0",
+    "openpyxl",
+    "ipykernel",
+    "notebook",
+]
+
+[tool.uv]
+package = false
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu128", marker = "sys_platform == 'win32' or sys_platform == 'linux'" },
+]
+torchvision = [
+    { index = "pytorch-cu128", marker = "sys_platform == 'win32' or sys_platform == 'linux'" },
+]

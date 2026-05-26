@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# uv
+.python-version
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+
+# Logs and runtime files
+*.log
+*.tmp
+*.temp
+
+# Trained model artifacts
+pytorch_trained_models/*.pht
+pytorch_trained_models/*.pth
+pytorch_trained_models/*.pt
+pytorch_trained_models/*.ckpt
+
+# Keep training metadata if present
+!pytorch_trained_models/model_ranking.csv
+!pytorch_trained_models/training_history.csv
+
+# Web app uploads and generated previews
+static/uploads/
+webapp/uploads/
+
+# Generated face-crop output
+crop_align_images/

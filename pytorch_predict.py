@@ -10,7 +10,7 @@ from torchvision import transforms
 def image_loader(path_image):
     
     """load image, returns cuda tensor"""
-    image = Image.open(path_image)
+    image = Image.open(path_image).convert("RGB")
     image = loader(image).float()
     image = image.view(1, *image.shape)
 
@@ -19,10 +19,11 @@ def image_loader(path_image):
 
 def predict(path_model, image, device):
     
-    model = torch.load(path_model, map_location=torch.device(device))
+    model = torch.load(path_model, map_location=torch.device(device), weights_only=False)
     model = model.to(device)
     model.eval()
-    result = model(image)
+    with torch.no_grad():
+        result = model(image)
     
     return result
   
@@ -40,7 +41,11 @@ if __name__ == '__main__':
     
     
     imsize = (256, 256)
-    loader = transforms.Compose([transforms.Resize(imsize), transforms.ToTensor()])
+    loader = transforms.Compose([
+        transforms.Resize(imsize),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
+    ])
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     image = image_loader(image_path)

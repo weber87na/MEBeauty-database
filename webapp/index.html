@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MEBeauty Score Tester</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <main class="app">
+    <section class="controls">
+      <header>
+        <h1>MEBeauty Score Tester</h1>
+        <p>上傳 JPG、PNG、WEBP 或 BMP，使用本機 PyTorch 模型估計分數。</p>
+      </header>
+
+      <div class="status">
+        <span>Device</span>
+        <strong id="device">Loading</strong>
+      </div>
+
+      <form id="predictForm">
+        <label class="field">
+          <span>模型</span>
+          <select id="modelSelect" name="model_path" required></select>
+        </label>
+
+        <label class="dropzone" id="dropzone">
+          <input id="imageInput" name="image" type="file" accept="image/png,image/jpeg,image/webp,image/bmp" required>
+          <span>選擇圖片</span>
+        </label>
+
+        <button id="submitButton" type="submit">測試分數</button>
+      </form>
+
+      <p class="message" id="message"></p>
+    </section>
+
+    <section class="preview">
+      <div class="imageStage">
+        <img id="previewImage" alt="Uploaded preview">
+        <div id="emptyState">尚未選擇圖片</div>
+      </div>
+      <div class="scorePanel">
+        <span>Beauty score</span>
+        <strong id="score">--</strong>
+      </div>
+    </section>
+  </main>
+
+  <script src="/assets/app.js"></script>
+</body>
+</html>
