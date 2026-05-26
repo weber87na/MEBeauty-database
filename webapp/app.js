@@ -8,6 +8,8 @@ const emptyState = document.querySelector("#emptyState");
 const scoreLabel = document.querySelector("#score");
 const relativeRank = document.querySelector("#relativeRank");
 const cropDetails = document.querySelector("#cropDetails");
+const toggleDetailsButton = document.querySelector("#toggleDetailsButton");
+const detailsContent = document.querySelector("#detailsContent");
 const message = document.querySelector("#message");
 const submitButton = document.querySelector("#submitButton");
 const clearButton = document.querySelector("#clearButton");
@@ -18,6 +20,7 @@ const cameraCanvas = document.querySelector("#cameraCanvas");
 
 let selectedFile = null;
 let cameraStream = null;
+let detailsExpanded = false;
 
 function setMessage(text) {
   message.textContent = text || "";
@@ -30,10 +33,16 @@ function setLoading(isLoading) {
 function resetResult() {
   scoreLabel.textContent = "--";
   relativeRank.textContent = "相對等級 --";
-  cropDetails.innerHTML = `
-    <div class="detailsTitle">Crop details</div>
-    <div class="detailsEmpty">尚未產生詳細分數</div>
-  `;
+  
+  // Reset details panel to collapsed state
+  detailsExpanded = false;
+  detailsContent.style.display = "none";
+  cropDetails.classList.remove("expanded");
+  toggleDetailsButton.setAttribute("aria-expanded", "false");
+  
+  const detailsTitle = document.querySelector(".detailsTitle");
+  detailsTitle.textContent = "Crop details";
+  detailsContent.innerHTML = `<div class="detailsEmpty">尚未產生詳細分數</div>`;
 }
 
 function renderCropDetails(data) {
@@ -53,9 +62,12 @@ function renderCropDetails(data) {
     </div>
   `;
 
+  const detailsContent = document.getElementById("detailsContent");
+  const detailsTitle = document.querySelector(".detailsTitle");
+  
   if (!crops.length) {
-    cropDetails.innerHTML = `
-      <div class="detailsTitle">Crop details · ${mode}</div>
+    detailsTitle.textContent = `Crop details · ${mode}`;
+    detailsContent.innerHTML = `
       <div class="detailRow summary">
         <span>score</span>
         <span>${data.score_scale || "--"}</span>
@@ -79,8 +91,8 @@ function renderCropDetails(data) {
     `;
   }).join("");
 
-  cropDetails.innerHTML = `
-    <div class="detailsTitle">Crop details · ${mode}</div>
+  detailsTitle.textContent = `Crop details · ${mode}`;
+  detailsContent.innerHTML = `
     ${rows}
     <div class="detailRow summary">
       <span>average</span>
@@ -167,6 +179,9 @@ async function loadModels() {
 async function autoSubmitPrediction() {
   if (!selectedFile || !modelSelect.value) return;
   
+  setMessage("");
+  resetResult();
+  
   const threshold = parseFloat(thresholdSelect.value);
   
   const formData = new FormData();
@@ -225,10 +240,7 @@ imageInput.addEventListener("change", async () => {
 
 thresholdSelect.addEventListener("change", () => {
   if (selectedFile && modelSelect.value) {
-    resetResult();
-    setMessage("重新計算中...");
-    setLoading(true);
-    setTimeout(autoSubmitPrediction, 100);
+    autoSubmitPrediction();
   }
 });
 
@@ -286,6 +298,14 @@ clearButton.addEventListener("click", () => {
   imageInput.value = "";
   setPreviewFromFile(null);
   setMessage("");
+});
+
+toggleDetailsButton.addEventListener("click", (event) => {
+  event.preventDefault();
+  detailsExpanded = !detailsExpanded;
+  detailsContent.style.display = detailsExpanded ? "block" : "none";
+  cropDetails.classList.toggle("expanded", detailsExpanded);
+  toggleDetailsButton.setAttribute("aria-expanded", detailsExpanded);
 });
 
 form.addEventListener("submit", (event) => {

@@ -72,8 +72,13 @@
         <strong id="score">--</strong>
       </div>
       <div class="detailsPanel" id="cropDetails" aria-live="polite">
-        <div class="detailsTitle">Crop details</div>
-        <div class="detailsEmpty">尚未產生詳細分數</div>
+        <div class="detailsHeader">
+          <div class="detailsTitle">Crop details</div>
+          <button type="button" id="toggleDetailsButton" class="toggleButton" aria-expanded="false">▼</button>
+        </div>
+        <div class="detailsContent" id="detailsContent" style="display: none;">
+          <div class="detailsEmpty">尚未產生詳細分數</div>
+        </div>
       </div>
     </section>
   </main>

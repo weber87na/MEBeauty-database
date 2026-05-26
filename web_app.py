@@ -533,13 +533,18 @@ def models():
 
 
 @app.post("/api/predict")
-def predict(model_path: str = Form(...), image: UploadFile = File(...), threshold: float = Form(8.5)):
+def predict(model_path: str = Form(...), image: UploadFile = File(...), threshold: float = Form(default=8.5)):
     resolved_model = resolve_model_path(model_path)
     pil_image = uploaded_image(image)
     model = load_model(resolved_model)
     
-    # Ensure threshold is a valid float between reasonable bounds
-    threshold = float(threshold)
+    # 确保 threshold 是有效的浮点数
+    try:
+        threshold = float(threshold)
+    except (ValueError, TypeError):
+        threshold = 8.5
+    
+    # 限制 threshold 在合理范围内
     threshold = max(0.0, min(10.0, threshold))
 
     prediction = predict_crops(model, pil_image, resolved_model)
@@ -563,7 +568,7 @@ def predict(model_path: str = Form(...), image: UploadFile = File(...), threshol
         "face_detected": prediction["face_detected"],
         "inference_mode": prediction["inference_mode"],
         "crops": prediction["crops"],
-        "threshold": threshold,
+        "threshold": round(threshold, 1),
         "face_visible": face_visible,
         "blur_applied": blur_applied,
         "protection": protection,
