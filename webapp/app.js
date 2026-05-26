@@ -23,8 +23,7 @@ function setMessage(text) {
 }
 
 function setLoading(isLoading) {
-  submitButton.disabled = isLoading || !modelSelect.value || !selectedFile;
-  submitButton.textContent = isLoading ? "測試中..." : "測試分數";
+  clearButton.disabled = isLoading;
 }
 
 function resetResult() {
@@ -164,8 +163,62 @@ async function loadModels() {
   setLoading(false);
 }
 
-imageInput.addEventListener("change", () => {
+async function autoSubmitPrediction() {
+  if (!selectedFile || !modelSelect.value) return;
+  
+  setMessage("");
+  resetResult();
+  
+  const formData = new FormData();
+  formData.append("model_path", modelSelect.value);
+  formData.append("image", selectedFile);
+  
+  setLoading(true);
+  try {
+    const response = await fetch("/api/predict", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.detail || "推論失敗。");
+    }
+    
+    scoreLabel.textContent = Number(data.score).toFixed(2);
+    if (data.result_image) {
+      previewImage.src = data.result_image;
+      previewImage.style.display = "block";
+      emptyState.style.display = "none";
+    }
+    if (data.relative && data.relative.percentile !== null) {
+      relativeRank.textContent = `${data.relative.band} · 高於 ${data.relative.percentile}% 測試集樣本 · 約前 ${data.relative.top_percent}%`;
+    } else if (data.score_scale) {
+      relativeRank.textContent = `${data.relative.band} · 分數尺度 ${data.score_scale}`;
+    } else {
+      relativeRank.textContent = "相對等級無法計算";
+    }
+    renderCropDetails(data);
+    if (data.face_visible) {
+      setMessage(`分數達 ${data.visibility_threshold} 以上，顯示原圖人臉。`);
+    } else if (data.blur_applied) {
+      const method = data.protection?.method || "feature protection";
+      setMessage(`分數低於 ${data.visibility_threshold}，五官已自動淡出（${method}）。`);
+    } else {
+      setMessage(data.face_detected ? "已自動偵測並裁切最大的人臉。" : "未偵測到清楚人臉，已使用整張圖片。");
+    }
+  } catch (error) {
+    setMessage(error.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+imageInput.addEventListener("change", async () => {
   setPreviewFromFile(imageInput.files[0] || null);
+  if (imageInput.files[0] && modelSelect.value) {
+    setTimeout(autoSubmitPrediction, 100);
+  }
 });
 
 cameraButton.addEventListener("click", async () => {
@@ -199,7 +252,7 @@ captureButton.addEventListener("click", () => {
   const context = cameraCanvas.getContext("2d");
   context.drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height);
 
-  cameraCanvas.toBlob((blob) => {
+  cameraCanvas.toBlob(async (blob) => {
     if (!blob) {
       setMessage("拍照失敗，請再試一次。");
       return;
@@ -209,6 +262,10 @@ captureButton.addEventListener("click", () => {
     imageInput.value = "";
     setPreviewFromFile(file);
     stopCamera();
+    
+    if (modelSelect.value) {
+      setTimeout(autoSubmitPrediction, 100);
+    }
   }, "image/jpeg", 0.92);
 });
 
@@ -220,59 +277,8 @@ clearButton.addEventListener("click", () => {
   setMessage("");
 });
 
-form.addEventListener("submit", async (event) => {
+form.addEventListener("submit", (event) => {
   event.preventDefault();
-  setMessage("");
-  resetResult();
-
-  if (!selectedFile) {
-    setMessage("請先選擇圖片。");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("model_path", modelSelect.value);
-  formData.append("image", selectedFile);
-
-  setLoading(true);
-  try {
-    const response = await fetch("/api/predict", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.detail || "推論失敗。");
-    }
-
-    scoreLabel.textContent = Number(data.score).toFixed(2);
-    if (data.result_image) {
-      previewImage.src = data.result_image;
-      previewImage.style.display = "block";
-      emptyState.style.display = "none";
-    }
-    if (data.relative && data.relative.percentile !== null) {
-      relativeRank.textContent = `${data.relative.band} · 高於 ${data.relative.percentile}% 測試集樣本 · 約前 ${data.relative.top_percent}%`;
-    } else if (data.score_scale) {
-      relativeRank.textContent = `${data.relative.band} · 分數尺度 ${data.score_scale}`;
-    } else {
-      relativeRank.textContent = "相對等級無法計算";
-    }
-    renderCropDetails(data);
-    if (data.face_visible) {
-      setMessage(`分數達 ${data.visibility_threshold} 以上，顯示原圖人臉。`);
-    } else if (data.blur_applied) {
-      const method = data.protection?.method || "feature protection";
-      setMessage(`分數低於 ${data.visibility_threshold}，五官已自動淡出（${method}）。`);
-    } else {
-      setMessage(data.face_detected ? "已自動偵測並裁切最大的人臉。" : "未偵測到清楚人臉，已使用整張圖片。");
-    }
-  } catch (error) {
-    setMessage(error.message);
-  } finally {
-    setLoading(false);
-  }
 });
 
 loadModels().catch((error) => {

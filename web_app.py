@@ -47,7 +47,7 @@ FACE_KEYPOINT_DETECTOR = None
 FACE_KEYPOINT_IMPORT_ERROR = None
 
 
-app = FastAPI(title="MEBeauty Score Web App")
+app = FastAPI(title="高顏值照相機")
 app.mount("/assets", StaticFiles(directory=WEB_DIR), name="assets")
 
 
