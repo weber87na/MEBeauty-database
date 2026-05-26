@@ -25,6 +25,16 @@
           <select id="modelSelect" name="model_path" required></select>
         </label>
 
+        <label class="field">
+          <span>模糊門檻值</span>
+          <select id="thresholdSelect" name="threshold">
+            <option value="8.0">8.0</option>
+            <option value="8.5" selected>8.5</option>
+            <option value="9.0">9.0</option>
+            <option value="9.5">9.5</option>
+          </select>
+        </label>
+
         <div class="inputGroup">
           <label class="dropzone" id="dropzone">
             <input id="imageInput" name="image" type="file" accept="image/png,image/jpeg,image/webp,image/bmp">

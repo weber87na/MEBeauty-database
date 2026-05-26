@@ -416,16 +416,16 @@ def image_data_url(image: Image.Image) -> str:
     return f"data:image/jpeg;base64,{encoded}"
 
 
-def protected_result_image(image: Image.Image, face_box, score: float):
+def protected_result_image(image: Image.Image, face_box, score: float, threshold: float = VISIBILITY_THRESHOLD):
     details = {
         "applied": False,
         "method": "none",
         "landmarks_detected": False,
         "regions": [],
-        "threshold": VISIBILITY_THRESHOLD,
+        "threshold": threshold,
     }
 
-    if score >= VISIBILITY_THRESHOLD:
+    if score >= threshold:
         return image_data_url(image), False, True, details
 
     result = image.copy()
@@ -533,10 +533,14 @@ def models():
 
 
 @app.post("/api/predict")
-def predict(model_path: str = Form(...), image: UploadFile = File(...)):
+def predict(model_path: str = Form(...), image: UploadFile = File(...), threshold: float = Form(8.5)):
     resolved_model = resolve_model_path(model_path)
     pil_image = uploaded_image(image)
     model = load_model(resolved_model)
+    
+    # Ensure threshold is a valid float between reasonable bounds
+    threshold = float(threshold)
+    threshold = max(0.0, min(10.0, threshold))
 
     prediction = predict_crops(model, pil_image, resolved_model)
     score = prediction["score"]
@@ -546,6 +550,7 @@ def predict(model_path: str = Form(...), image: UploadFile = File(...)):
         pil_image,
         prediction["face_box"],
         score,
+        threshold,
     )
 
     return {
@@ -558,7 +563,7 @@ def predict(model_path: str = Form(...), image: UploadFile = File(...)):
         "face_detected": prediction["face_detected"],
         "inference_mode": prediction["inference_mode"],
         "crops": prediction["crops"],
-        "visibility_threshold": VISIBILITY_THRESHOLD,
+        "threshold": threshold,
         "face_visible": face_visible,
         "blur_applied": blur_applied,
         "protection": protection,

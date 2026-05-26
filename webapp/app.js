@@ -1,4 +1,5 @@
 const modelSelect = document.querySelector("#modelSelect");
+const thresholdSelect = document.querySelector("#thresholdSelect");
 const deviceLabel = document.querySelector("#device");
 const form = document.querySelector("#predictForm");
 const imageInput = document.querySelector("#imageInput");
@@ -166,12 +167,12 @@ async function loadModels() {
 async function autoSubmitPrediction() {
   if (!selectedFile || !modelSelect.value) return;
   
-  setMessage("");
-  resetResult();
+  const threshold = parseFloat(thresholdSelect.value);
   
   const formData = new FormData();
   formData.append("model_path", modelSelect.value);
   formData.append("image", selectedFile);
+  formData.append("threshold", threshold.toString());
   
   setLoading(true);
   try {
@@ -199,11 +200,12 @@ async function autoSubmitPrediction() {
       relativeRank.textContent = "相對等級無法計算";
     }
     renderCropDetails(data);
+    const thresholdValue = data.threshold !== undefined ? Number(data.threshold).toFixed(1) : thresholdSelect.value;
     if (data.face_visible) {
-      setMessage(`分數達 ${data.visibility_threshold} 以上，顯示原圖人臉。`);
+      setMessage(`分數達 ${thresholdValue} 以上，顯示原圖人臉。`);
     } else if (data.blur_applied) {
       const method = data.protection?.method || "feature protection";
-      setMessage(`分數低於 ${data.visibility_threshold}，五官已自動淡出（${method}）。`);
+      setMessage(`分數低於 ${thresholdValue}，五官已自動淡出（${method}）。`);
     } else {
       setMessage(data.face_detected ? "已自動偵測並裁切最大的人臉。" : "未偵測到清楚人臉，已使用整張圖片。");
     }
@@ -217,6 +219,15 @@ async function autoSubmitPrediction() {
 imageInput.addEventListener("change", async () => {
   setPreviewFromFile(imageInput.files[0] || null);
   if (imageInput.files[0] && modelSelect.value) {
+    setTimeout(autoSubmitPrediction, 100);
+  }
+});
+
+thresholdSelect.addEventListener("change", () => {
+  if (selectedFile && modelSelect.value) {
+    resetResult();
+    setMessage("重新計算中...");
+    setLoading(true);
     setTimeout(autoSubmitPrediction, 100);
   }
 });
