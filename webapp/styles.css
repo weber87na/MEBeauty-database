@@ -388,6 +388,43 @@ select:disabled {
   font-weight: 900;
 }
 
+.detailRow.emotion {
+  border-top-color: #3CCB7F;
+}
+
+.emotionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: 8px;
+  padding-top: 12px;
+  color: #0066CC;
+  font-size: 12px;
+}
+
+.emotionItem {
+  min-width: 0;
+}
+
+.emotionItem span,
+.emotionItem strong {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.emotionItem span {
+  color: #0073E6;
+  font-weight: 800;
+}
+
+.emotionItem strong {
+  color: #FF6B6B;
+  text-align: right;
+  font-weight: 900;
+}
+
 @media (max-width: 880px) {
   .app {
     grid-template-columns: 1fr;

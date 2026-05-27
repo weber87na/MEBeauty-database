@@ -49,6 +49,7 @@ function renderCropDetails(data) {
   const crops = data.crops || [];
   const mode = data.inference_mode || (crops.length > 1 ? "multi-crop-average" : "single-crop");
   const protection = data.protection || {};
+  const emotion = data.emotion || {};
   const protectionMethod = protection.method || (data.blur_applied ? "legacy-blur" : "none");
   const protectedRegions = Array.isArray(protection.regions) && protection.regions.length
     ? protection.regions.join(", ")
@@ -61,6 +62,31 @@ function renderCropDetails(data) {
       <em>${protection.landmarks_detected ? protectedRegions : "no landmarks"}</em>
     </div>
   `;
+  const emotionRow = emotion.available ? `
+    <div class="detailRow emotion">
+      <span>表情親和分數</span>
+      <span>${emotion.dominant_label || emotion.dominant || "--"}</span>
+      <strong>${Number(emotion.score).toFixed(2)}</strong>
+      <em>${Number(emotion.confidence || 0).toFixed(1)}% 模型信心</em>
+    </div>
+  ` : `
+    <div class="detailRow emotion">
+      <span>表情親和分數</span>
+      <span>DeepFace</span>
+      <strong>--</strong>
+      <em>${emotion.error || "unavailable"}</em>
+    </div>
+  `;
+  const emotionBreakdown = emotion.available && emotion.emotions ? `
+    <div class="emotionGrid">
+      ${Object.entries(emotion.emotions).map(([name, value]) => `
+        <div class="emotionItem">
+          <span>${name}</span>
+          <strong>${Number(value).toFixed(1)}%</strong>
+        </div>
+      `).join("")}
+    </div>
+  ` : "";
 
   const detailsContent = document.getElementById("detailsContent");
   const detailsTitle = document.querySelector(".detailsTitle");
@@ -75,6 +101,8 @@ function renderCropDetails(data) {
         <em>raw ${Number(data.raw_score ?? data.score).toFixed(4)}</em>
       </div>
       ${protectionRow}
+      ${emotionRow}
+      ${emotionBreakdown}
     `;
     return;
   }
@@ -101,6 +129,8 @@ function renderCropDetails(data) {
       <em>raw ${Number(data.raw_score).toFixed(4)}</em>
     </div>
     ${protectionRow}
+    ${emotionRow}
+    ${emotionBreakdown}
   `;
 }
 
@@ -217,10 +247,12 @@ async function autoSubmitPrediction() {
     renderCropDetails(data);
     const thresholdValue = data.threshold !== undefined ? Number(data.threshold).toFixed(1) : thresholdSelect.value;
     if (data.face_visible) {
-      setMessage(`分數達 ${thresholdValue} 以上，顯示原圖人臉。`);
+      const emotionText = data.emotion?.available ? `表情親和分數 ${Number(data.emotion.score).toFixed(2)}，${data.emotion.dominant_label || data.emotion.dominant}。` : "";
+      setMessage(`分數達 ${thresholdValue} 以上，顯示原圖人臉。${emotionText}`);
     } else if (data.blur_applied) {
       const method = data.protection?.method || "feature protection";
-      setMessage(`分數低於 ${thresholdValue}，五官已自動淡出（${method}）。`);
+      const emotionText = data.emotion?.available ? `表情親和分數 ${Number(data.emotion.score).toFixed(2)}。` : "";
+      setMessage(`分數低於 ${thresholdValue}，五官已自動淡出（${method}）。${emotionText}`);
     } else {
       setMessage(data.face_detected ? "已自動偵測並裁切最大的人臉。" : "未偵測到清楚人臉，已使用整張圖片。");
     }

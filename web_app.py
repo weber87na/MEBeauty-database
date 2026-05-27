@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from PIL import Image, ImageDraw, ImageFilter, UnidentifiedImageError
+from PIL import Image, ImageDraw, ImageFilter, ImageOps, UnidentifiedImageError
 
 from pytorch_mebeauty_dataset import MEBeauty, build_transform
 from scut_model import load_scut_resnet18
@@ -45,6 +45,25 @@ FACE_CASCADE = cv2.CascadeClassifier(
 )
 FACE_KEYPOINT_DETECTOR = None
 FACE_KEYPOINT_IMPORT_ERROR = None
+DEEPFACE_IMPORT_ERROR = None
+EMOTION_LABELS_ZH = {
+    "angry": "生氣",
+    "disgust": "厭惡",
+    "fear": "害怕",
+    "happy": "開心",
+    "sad": "難過",
+    "surprise": "驚訝",
+    "neutral": "自然",
+}
+EMOTION_SCORE_WEIGHTS = {
+    "happy": 1.0,
+    "neutral": 0.65,
+    "surprise": 0.55,
+    "sad": 0.25,
+    "fear": 0.2,
+    "angry": 0.1,
+    "disgust": 0.0,
+}
 
 
 app = FastAPI(title="高顏值照相機")
@@ -151,6 +170,108 @@ def clamp_score(raw_score: float, model_path: Path) -> tuple[float, str]:
     if model_path.name == "scut_resnet18_py3.pth":
         return min(max(raw_score, SCUT_MIN_SCORE), SCUT_MAX_SCORE), "1-5"
     return min(max(raw_score, MIN_SCORE), MAX_SCORE), "1-10"
+
+
+def get_deepface():
+    global DEEPFACE_IMPORT_ERROR
+
+    if DEEPFACE_IMPORT_ERROR is not None:
+        return None
+
+    try:
+        from deepface import DeepFace
+    except Exception as exc:
+        DEEPFACE_IMPORT_ERROR = str(exc)
+        return None
+
+    return DeepFace
+
+
+def emotion_score(emotions: dict[str, Any]) -> float:
+    weighted_total = 0.0
+    confidence_total = 0.0
+
+    for name, confidence in emotions.items():
+        value = float(confidence)
+        weighted_total += value * EMOTION_SCORE_WEIGHTS.get(name, 0.0)
+        confidence_total += value
+
+    if confidence_total <= 0:
+        return 0.0
+
+    return min(max((weighted_total / confidence_total) * 10.0, 0.0), 10.0)
+
+
+def prepare_emotion_image(image: Image.Image, face_box=None) -> tuple[Image.Image, str]:
+    if face_box is not None:
+        emotion_image = crop_face_with_margin(image, face_box, FACE_MARGIN)
+        source = "face-crop"
+    else:
+        emotion_image = image
+        source = "full-image"
+
+    emotion_image = ImageOps.autocontrast(emotion_image.convert("RGB"), cutoff=1)
+    emotion_image = emotion_image.filter(ImageFilter.SHARPEN)
+
+    min_side = min(emotion_image.size)
+    if min_side and min_side < 224:
+        scale = 224 / min_side
+        resized_size = (
+            max(1, int(emotion_image.width * scale)),
+            max(1, int(emotion_image.height * scale)),
+        )
+        emotion_image = emotion_image.resize(resized_size, Image.Resampling.BICUBIC)
+
+    return emotion_image, source
+
+
+def analyze_face_emotion(image: Image.Image, face_box=None) -> dict[str, Any]:
+    DeepFace = get_deepface()
+    if DeepFace is None:
+        return {
+            "available": False,
+            "error": DEEPFACE_IMPORT_ERROR or "DeepFace is not available.",
+        }
+
+    emotion_image, source = prepare_emotion_image(image, face_box)
+
+    try:
+        image_array = np.array(emotion_image)
+        analysis = DeepFace.analyze(
+            img_path=image_array,
+            actions=["emotion"],
+            detector_backend="opencv",
+            enforce_detection=False,
+            silent=True,
+        )
+    except Exception as exc:
+        return {
+            "available": False,
+            "error": str(exc),
+        }
+
+    if isinstance(analysis, list):
+        analysis = analysis[0] if analysis else {}
+
+    raw_emotions = analysis.get("emotion") or {}
+    emotions = {
+        name: round(float(raw_emotions.get(name, 0.0)), 2)
+        for name in EMOTION_SCORE_WEIGHTS
+    }
+    dominant = str(analysis.get("dominant_emotion") or max(emotions, key=emotions.get, default="neutral"))
+    score = emotion_score(emotions)
+
+    return {
+        "available": True,
+        "score": round(score, 2),
+        "score_scale": "0-10",
+        "dominant": dominant,
+        "dominant_label": EMOTION_LABELS_ZH.get(dominant, dominant),
+        "confidence": emotions.get(dominant, 0.0),
+        "emotions": emotions,
+        "source": source,
+        "preprocessing": ["face_crop" if face_box is not None else "full_image", "autocontrast", "sharpen"],
+    }
 
 
 def detect_largest_face_box(image: Image.Image):
@@ -551,6 +672,7 @@ def predict(model_path: str = Form(...), image: UploadFile = File(...), threshol
     score = prediction["score"]
     raw_score = prediction["raw_score"]
     rank = relative_rank(raw_score, resolved_model)
+    emotion = analyze_face_emotion(pil_image, prediction["face_box"])
     result_image, blur_applied, face_visible, protection = protected_result_image(
         pil_image,
         prediction["face_box"],
@@ -572,5 +694,6 @@ def predict(model_path: str = Form(...), image: UploadFile = File(...), threshol
         "face_visible": face_visible,
         "blur_applied": blur_applied,
         "protection": protection,
+        "emotion": emotion,
         "result_image": result_image,
     }
