@@ -3,15 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>高顏值照相機</title>
+  <title>外貿協會 AI 相機</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text x=%2250%%22 y=%2250%%22 font-size=%2280%22 text-anchor=%22middle%22 dominant-baseline=%22central%22>😄</text></svg>">
   <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
   <main class="app">
     <section class="controls">
       <header>
-        <h1>高顏值照相機</h1>
-        <p>上傳 JPG、PNG、WEBP 或 BMP，使用本機 PyTorch 模型估計分數。</p>
+        <h1>外貿協會 AI 相機</h1>
+        <p>上傳 JPG、PNG、WEBP 或 BMP，使用 AI 模型估計分數。</p>
       </header>
 
       <div class="status">
@@ -53,15 +54,31 @@
 
         <div class="actionBar">
           <button id="clearButton" type="button" class="secondary">清除</button>
+          <button id="downloadButton" type="button" class="secondary" disabled>下載結果</button>
         </div>
+        <button id="shareButton" type="button" disabled>複製分享文字</button>
       </form>
 
       <p class="message" id="message"></p>
+      <div class="leaderboardPanel">
+        <div class="leaderboardStats">
+          <div>
+            <span>最高顏值</span>
+            <strong id="bestBeauty">--</strong>
+          </div>
+          <div>
+            <span>最兇指數</span>
+            <strong id="bestThreat">--</strong>
+          </div>
+        </div>
+        <div class="sessionHistory" id="sessionHistory">尚無紀錄</div>
+      </div>
     </section>
 
     <section class="preview">
       <div class="imageStage">
         <img id="previewImage" alt="Uploaded preview">
+        <div id="imageOverlay" class="imageOverlay" aria-hidden="true"></div>
         <div id="emptyState">尚未選擇圖片</div>
       </div>
       <div class="scorePanel">
@@ -70,6 +87,13 @@
           <p class="relative" id="relativeRank">相對等級 --</p>
         </div>
         <strong id="score">--</strong>
+      </div>
+      <div class="behaviorPanel">
+        <div>
+          <span>輸出模式</span>
+          <strong id="behaviorMode">尚未判定</strong>
+        </div>
+        <p id="behaviorReasons">拍照或選擇圖片後顯示觸發原因。</p>
       </div>
       <div class="detailsPanel" id="cropDetails" aria-live="polite">
         <div class="detailsHeader">

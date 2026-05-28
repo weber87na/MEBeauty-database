@@ -30,6 +30,7 @@ desktop.ini
 *.log
 *.tmp
 *.temp
+results/
 
 # Trained model artifacts
 pytorch_trained_models/*.pht
